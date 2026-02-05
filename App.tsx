@@ -55,12 +55,10 @@ const App: React.FC = () => {
     setError(null);
     setReport(null);
     
-    // Scroll to top of lab when analysis starts to show full processing view
     document.getElementById('analysis-lab')?.scrollIntoView({ behavior: 'smooth' });
 
     try {
       const result = await analyzeAudio(fileData.base64, fileData.type);
-      // Brief artificial delay to let the processing visuals shine
       setTimeout(() => {
         setReport(result);
         setIsAnalyzing(false);
@@ -76,7 +74,6 @@ const App: React.FC = () => {
 
   return (
     <Layout>
-      {/* Tactical Mouse Reticle Effect */}
       <div 
         className="fixed w-64 h-64 border border-white/[0.02] rounded-full pointer-events-none z-[50] hidden md:block"
         style={{ 
@@ -96,7 +93,7 @@ const App: React.FC = () => {
 
       <div className="flex flex-col gap-10 md:gap-16 relative z-20">
         
-        {/* Page 1 & Page 2 & Page 3 Controller */}
+        {/* System Vital Dashboard */}
         <div className="flex flex-col md:flex-row items-stretch justify-between bg-black/80 border border-white/10 rounded-[2rem] backdrop-blur-3xl shadow-[0_0_80px_rgba(0,0,0,0.9)] overflow-hidden">
           <div className="flex flex-col md:flex-row items-center">
              <div className="px-10 py-8 border-b md:border-b-0 md:border-r border-white/10 flex items-center gap-6">
@@ -112,7 +109,7 @@ const App: React.FC = () => {
              <div className="px-10 py-8 flex items-center gap-6 border-b md:border-b-0 md:border-r border-white/10 bg-white/[0.02]">
                 <Cpu className="w-5 h-5 text-orange-500" />
                 <div className="flex flex-col">
-                    <span className="text-[12px] font-black uppercase text-slate-200 tracking-[0.3em] mono italic">ENGINE: AASIST_GRAPH_V2.5</span>
+                    <span className="text-[12px] font-black uppercase text-slate-200 tracking-[0.3em] mono italic">ENGINE: AASIST_CORE</span>
                     <span className="text-[8px] text-slate-600 mono font-black">STRATAGEM_CORE</span>
                 </div>
              </div>
@@ -149,10 +146,8 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        {/* Main Interface Wrapper */}
-        <section id="analysis-lab" className="forensic-panel rounded-[3rem] p-8 md:p-24 relative overflow-hidden transition-all duration-700 shadow-[0_0_120px_rgba(0,0,0,1)] group">
-           
-            {/* Condition 1: Input Phase (Page 1) */}
+        {/* Forensic Analysis Lab Section */}
+        <section id="analysis-lab" className="forensic-panel rounded-[3rem] p-8 md:p-24 relative overflow-hidden transition-all duration-700 shadow-[0_0_120px_rgba(0,0,0,1)] group scroll-mt-24">
             {!isAnalyzing && !report && (
               <div className="relative z-10 max-w-4xl mx-auto animate-in fade-in slide-in-from-top-4 duration-700">
                 <div className="text-center mb-20">
@@ -184,7 +179,7 @@ const App: React.FC = () => {
                       active={activeTab === 'code'} 
                       onClick={() => setActiveTab('code')} 
                       icon={<Code2 className="w-4 h-4" />} 
-                      label="GAT Logic" 
+                      label="System Logic" 
                     />
                   </div>
                 </div>
@@ -209,10 +204,8 @@ const App: React.FC = () => {
               </div>
             )}
 
-            {/* Condition 2: Processing Phase (Page 2) */}
             {isAnalyzing && !report && <ProcessingView />}
 
-            {/* Condition 3: Result Phase (Page 3) */}
             {report && (
               <div className="relative z-10 animate-in fade-in slide-in-from-bottom-6 duration-1000">
                 <ResultView report={report} onReset={handleReset} />
@@ -227,9 +220,9 @@ const App: React.FC = () => {
             )}
         </section>
 
-        {/* Methodology Content (Always there at bottom) */}
-        <section id="methodology-section" className={`scroll-mt-32 mb-48 transition-all duration-1000 ${isAnalyzing ? 'opacity-20 grayscale pointer-events-none scale-95' : 'opacity-100'}`}>
-          <div className="flex flex-col items-center mb-24 flicker-ui">
+        {/* Methodology Content Archive */}
+        <section className={`mb-48 transition-all duration-1000 ${isAnalyzing ? 'opacity-20 grayscale pointer-events-none scale-95' : 'opacity-100'}`}>
+          <div className="flex flex-col items-center mb-32 flicker-ui">
              <div className="px-6 py-2 bg-white/5 border border-white/10 rounded-full mb-6">
                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.8em] mono">Research.Intelligence.Archive</span>
              </div>

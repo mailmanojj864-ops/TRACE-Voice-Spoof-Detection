@@ -1,126 +1,199 @@
 
 import React from 'react';
-import { BookOpen, Network, Mic2, ShieldCheck, Cpu, Database, Waves, Share2 } from 'lucide-react';
+import { 
+  BookOpen, 
+  Network, 
+  Cpu, 
+  Database, 
+  Waves, 
+  ShieldCheck, 
+  Fingerprint, 
+  Activity,
+  Layers,
+  ArrowRight,
+  Boxes,
+  Microscope
+} from 'lucide-react';
 
 export const EducationalPanel: React.FC = () => {
   return (
-    <div className="mt-12 w-full grid grid-cols-1 lg:grid-cols-2 gap-16 pt-16 border-t border-white/5">
-      <div className="space-y-10">
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-[#4aa3b8]/10 rounded-xl border border-[#4aa3b8]/20">
-              <BookOpen className="w-6 h-6 text-[#4aa3b8]" />
+    <div className="space-y-32">
+      {/* SECTION 1: ARCHITECTURAL METHODOLOGY */}
+      <section id="methodology-section" className="scroll-mt-32">
+        <div className="flex flex-col gap-12">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/5 pb-8">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-600/20 rounded-lg">
+                  <Network className="w-5 h-5 text-orange-500" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-500 mono">Theoretical Framework</span>
+              </div>
+              <h2 className="text-5xl font-black text-white italic tracking-tighter uppercase">AASIST Methodology</h2>
             </div>
-            <h2 className="text-3xl font-black text-white uppercase tracking-tighter italic">The AASIST Methodology</h2>
+            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mono max-w-xs text-right leading-relaxed">
+              Integrated Spectro-Temporal Graph Attention Networks for Anti-Spoofing.
+            </p>
           </div>
-          <p className="text-slate-400 leading-relaxed text-lg font-medium italic opacity-80 pl-2 border-l-2 border-orange-500/20">
-            This implementation specifically leverages the <span className="text-white font-bold">Integrated Spectro-Temporal Graph Attention Network</span> framework. 
-            Unlike traditional systems, AASIST treats audio features as nodes in a high-dimensional graph.
-          </p>
-        </div>
-        
-        <div className="space-y-8">
-          <ConceptItem 
-            icon={<Cpu className="w-6 h-6" />} 
-            title="Sinc-based Convolution (CONV)"
-            description="Processes raw audio waveforms using band-pass filters initialized on the Mel-scale. This allows the model to focus on frequency bands most critical for human speech perception."
-            color="text-orange-500"
-            bgColor="bg-orange-500/10"
-            borderColor="border-orange-500/20"
-          />
-          <ConceptItem 
-            icon={<Network className="w-6 h-6" />} 
-            title="Heterogeneous GAT (HtrgGAT)"
-            description="Integrates Spectral (S) and Temporal (T) domains. It uses 'master nodes' to summarize information between different feature graphs, ensuring global context."
-            color="text-cyan-400"
-            bgColor="bg-cyan-400/10"
-            borderColor="border-cyan-400/20"
-          />
-          <ConceptItem 
-            icon={<Database className="w-6 h-6" />} 
-            title="Attention-Based Graph Pooling"
-            description="A GraphPool layer reduces dimensionality by selecting only the most informative nodes, discarding noise while retaining subtle spoofing signatures."
-            color="text-emerald-400"
-            bgColor="bg-emerald-400/10"
-            borderColor="border-emerald-400/20"
-          />
-        </div>
-      </div>
 
-      <div className="bg-black/40 rounded-[3rem] p-10 border border-white/5 shadow-2xl relative overflow-hidden group">
-        <div className="absolute top-0 right-0 p-10 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity">
-          <Share2 className="w-48 h-48 text-white" />
-        </div>
-        
-        <div className="flex items-center justify-between mb-12 border-b border-white/5 pb-6">
-          <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.4em] mono">Forensic Detection Strategy</h3>
-          <div className="flex gap-1">
-             <div className="w-1 h-1 rounded-full bg-orange-500 animate-pulse" />
-             <div className="w-1 h-1 rounded-full bg-orange-500 animate-pulse delay-75" />
-             <div className="w-1 h-1 rounded-full bg-orange-500 animate-pulse delay-150" />
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            <div className="lg:col-span-7 space-y-12">
+              <p className="text-xl text-slate-300 leading-relaxed font-medium italic border-l-4 border-orange-500/30 pl-8">
+                The TRACE engine utilizes the <span className="text-white font-bold">AASIST</span> architecture, which treats raw audio signals as a heterogeneous graph. By modeling the relationships between spectral nodes and temporal edges, the system captures subtle artifacts that traditional CNNs overlook.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FeatureCard 
+                  icon={<Waves className="w-6 h-6" />}
+                  title="Sinc-Convolution"
+                  desc="Processes raw waveforms using learnable band-pass filters, focusing the network on high-frequency vocoder artifacts common in neural TTS."
+                  accent="text-cyan-400"
+                />
+                <FeatureCard 
+                  icon={<Boxes className="w-6 h-6" />}
+                  title="Graph Construction"
+                  desc="Constructs a dual-graph where Spectral (S) and Temporal (T) nodes are interconnected via a heterogeneous connectivity matrix."
+                  accent="text-orange-500"
+                />
+                <FeatureCard 
+                  icon={<Layers className="w-6 h-6" />}
+                  title="HtrgGAT Layers"
+                  desc="Heterogeneous Graph Attention Layers compute dynamic weights for each node based on signal importance across domains."
+                  accent="text-emerald-400"
+                />
+                <FeatureCard 
+                  icon={<Database className="w-6 h-6" />}
+                  title="Max-Graph Pooling"
+                  desc="A custom pooling mechanism that identifies the 'peak signal' indicative of artificiality within the graph structure."
+                  accent="text-indigo-400"
+                />
+              </div>
+            </div>
+
+            <div className="lg:col-span-5">
+              <div className="bg-black/60 border border-white/10 rounded-[3rem] p-10 relative overflow-hidden h-full group">
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                
+                {/* Simulated Neural Graph Visual */}
+                <div className="relative h-64 w-full mb-10 flex items-center justify-center">
+                   <div className="absolute inset-0 border border-white/5 rounded-3xl bg-slate-950/50" />
+                   <div className="relative z-10 w-full h-full p-6">
+                      <svg className="w-full h-full" viewBox="0 0 400 200">
+                        {/* Nodes */}
+                        <circle cx="200" cy="100" r="40" className="fill-orange-500/10 stroke-orange-500 stroke-2 animate-pulse" />
+                        <circle cx="100" cy="60" r="15" className="fill-cyan-500/10 stroke-cyan-500 stroke-1" />
+                        <circle cx="300" cy="140" r="15" className="fill-cyan-500/10 stroke-cyan-500 stroke-1" />
+                        <circle cx="120" cy="150" r="10" className="fill-slate-500/20 stroke-slate-500" />
+                        <circle cx="280" cy="50" r="10" className="fill-slate-500/20 stroke-slate-500" />
+                        
+                        {/* Lines */}
+                        <line x1="200" y1="100" x2="100" y2="60" className="stroke-orange-500/30 stroke-2" />
+                        <line x1="200" y1="100" x2="300" y2="140" className="stroke-orange-500/30 stroke-2" />
+                        <line x1="100" y1="60" x2="120" y2="150" className="stroke-cyan-500/20" />
+                        <line x1="300" y1="140" x2="280" y2="50" className="stroke-cyan-500/20" />
+                      </svg>
+                   </div>
+                   <div className="absolute bottom-4 right-6 flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-ping" />
+                      <span className="text-[8px] mono font-black text-slate-500 uppercase tracking-widest">HtrgGAT_Active</span>
+                   </div>
+                </div>
+
+                <div className="space-y-6">
+                  <h3 className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-400 mono">Forensic Thresholds</h3>
+                  <div className="space-y-4">
+                    <ThresholdBar label="Mel-Sinc Bandwidth" value="128-ch" color="bg-cyan-500" />
+                    <ThresholdBar label="Graph Density" value="0.74" color="bg-orange-500" />
+                    <ThresholdBar label="Softmax Temp" value="100.0" color="bg-emerald-500" />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+      </section>
 
-        <div className="space-y-10">
-          <AttackType 
-            name="Text-to-Speech (TTS)"
-            desc="AASIST identifies specific 'frozen' spectral centroids and mathematical regularity in glottal pulses during neural vocoding."
-            severity="High"
-            accent="border-amber-500/40"
-          />
-          <AttackType 
-            name="Voice Conversion (VC)"
-            desc="Detected via HtrgGAT by identifying phase mismatches between source spectral envelopes and target temporal cadence."
-            severity="Medium"
-            accent="border-sky-500/40"
-          />
-          <AttackType 
-            name="Replay & Deepfakes"
-            desc="The model identifies unnatural room impulse responses and acoustic echoes layered on synthetic speech."
-            severity="Critical"
-            accent="border-rose-500/40"
-          />
-        </div>
-
-        <div className="mt-12 p-8 bg-[#4aa3b8]/5 border border-[#4aa3b8]/20 rounded-3xl flex items-center gap-6 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-[#4aa3b8]/10 blur-3xl rounded-full" />
-          <div className="p-4 bg-[#4aa3b8] rounded-2xl shadow-[0_0_20px_rgba(74,163,184,0.4)] relative z-10">
-            <ShieldCheck className="w-8 h-8 text-white" />
+      {/* SECTION 2: FORENSIC PROTOCOLS */}
+      <section id="protocols-section" className="scroll-mt-32">
+        <div className="bg-white/[0.02] border border-white/5 rounded-[4rem] p-12 md:p-20 relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-20 opacity-[0.03] rotate-12">
+            <ShieldCheck className="w-96 h-96 text-white" />
           </div>
-          <p className="text-sm text-[#4aa3b8] leading-relaxed font-bold italic relative z-10">
-            "By integrating spectral and temporal attention, the model achieves state-of-the-art performance on international ASVspoof benchmarks."
-          </p>
+
+          <div className="max-w-4xl space-y-16 relative z-10">
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="h-[1px] w-12 bg-orange-500" />
+                <span className="text-[11px] font-black uppercase tracking-[0.5em] text-orange-500 mono">Analysis Protocols</span>
+              </div>
+              <h2 className="text-4xl md:text-6xl font-black text-white italic tracking-tighter uppercase leading-none">
+                Detection Strategies
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+              <ProtocolItem 
+                title="Spectral Centroid Drift"
+                desc="Artificial voices often exhibit static frequency centroids that don't shift with emotional prosody. AASIST detects these as 'rigid' nodes in the spectral graph."
+                icon={<Activity className="w-5 h-5" />}
+              />
+              <ProtocolItem 
+                title="Vocoder Micro-Anomalies"
+                desc="High-frequency periodic noise is a signature of neural vocoders (like WaveNet or HiFi-GAN). These artifacts are amplified by Sinc-Conv layers."
+                icon={<Fingerprint className="w-5 h-5" />}
+              />
+              <ProtocolItem 
+                title="Phase Coupling Lack"
+                desc="Human speech has complex phase-amplitude coupling. Synthetic speech often shows linear or disconnected phase relationships across frequency bands."
+                icon={<Microscope className="w-5 h-5" />}
+              />
+              <ProtocolItem 
+                title="Temporal Quantization"
+                desc="The timing of deepfake speech is often strictly tied to a grid. The HtrgGAT Temporal branch detects these mathematical rhythmic patterns."
+                icon={<Cpu className="w-5 h-5" />}
+              />
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 };
 
-const ConceptItem: React.FC<{ icon: React.ReactNode; title: string; description: string; color: string; bgColor: string; borderColor: string }> = ({ icon, title, description, color, bgColor, borderColor }) => (
-  <div className="flex gap-6 group items-start">
-    <div className={`p-4 h-fit ${bgColor} rounded-2xl ${color} transition-all duration-300 border ${borderColor} shadow-lg group-hover:scale-110`}>
+const FeatureCard: React.FC<{ icon: React.ReactNode; title: string; desc: string; accent: string }> = ({ icon, title, desc, accent }) => (
+  <div className="bg-black/20 border border-white/5 p-8 rounded-3xl hover:bg-black/40 transition-all group cursor-default">
+    <div className={`mb-6 p-3 bg-white/5 rounded-2xl w-fit ${accent} group-hover:scale-110 transition-transform`}>
       {icon}
     </div>
-    <div className="space-y-1">
-      <h4 className={`text-lg font-black italic tracking-tight text-white transition-colors group-hover:${color}`}>{title}</h4>
-      <p className="text-sm text-slate-500 leading-relaxed font-medium mono">{description}</p>
+    <h4 className="text-lg font-black text-white mb-3 italic tracking-tight">{title}</h4>
+    <p className="text-sm text-slate-500 font-medium leading-relaxed mono">{desc}</p>
+  </div>
+);
+
+const ThresholdBar: React.FC<{ label: string; value: string; color: string }> = ({ label, value, color }) => (
+  <div className="space-y-2">
+    <div className="flex justify-between items-center px-1">
+      <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest mono">{label}</span>
+      <span className="text-[10px] font-black text-white mono italic">{value}</span>
+    </div>
+    <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+      <div className={`h-full ${color} w-2/3 animate-pulse`} />
     </div>
   </div>
 );
 
-const AttackType: React.FC<{ name: string; desc: string; severity: string; accent: string }> = ({ name, desc, severity, accent }) => (
-  <div className={`pl-8 border-l-2 ${accent} relative group`}>
-    <div className="absolute left-[-5px] top-0 w-2 h-2 rounded-full bg-white opacity-20 group-hover:opacity-100 group-hover:bg-orange-500 transition-all" />
-    <div className="flex items-center justify-between mb-3">
-      <h4 className="text-lg font-black text-slate-200 tracking-tight italic">{name}</h4>
-      <span className={`text-[9px] px-3 py-1 rounded-lg font-black uppercase tracking-widest mono border ${
-        severity === 'Critical' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' : 
-        severity === 'High' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 
-        'bg-sky-500/10 text-sky-400 border-sky-500/30'
-      }`}>
-        {severity}
-      </span>
+const ProtocolItem: React.FC<{ title: string; desc: string; icon: React.ReactNode }> = ({ title, desc, icon }) => (
+  <div className="space-y-4 group">
+    <div className="flex items-center gap-4">
+      <div className="p-2 bg-white/5 rounded-lg text-orange-500 group-hover:scale-125 transition-transform duration-500">
+        {icon}
+      </div>
+      <h4 className="text-xl font-black text-slate-200 tracking-tight italic uppercase group-hover:text-white transition-colors">
+        {title}
+      </h4>
     </div>
-    <p className="text-sm text-slate-500 leading-relaxed font-medium mono italic">{desc}</p>
+    <p className="text-sm text-slate-500 font-medium leading-relaxed italic border-l border-white/10 pl-6 group-hover:border-orange-500/50 transition-colors">
+      {desc}
+    </p>
   </div>
 );
