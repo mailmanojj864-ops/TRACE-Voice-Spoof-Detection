@@ -1,6 +1,6 @@
 
 import React, { useCallback, useState } from 'react';
-import { Upload, FileAudio, X, Mic } from 'lucide-react';
+import { Upload, FileAudio, X, FolderSearch, Fingerprint } from 'lucide-react';
 import { FileData } from '../types';
 
 interface UploaderProps {
@@ -15,7 +15,7 @@ export const Uploader: React.FC<UploaderProps> = ({ onFileSelect, isLoading }) =
     const file = e.target.files?.[0];
     if (file) {
       if (!file.type.includes('audio')) {
-        alert("Please upload an audio file (.wav preferred)");
+        alert("CRITICAL ERROR: Invalid MIME type. Expected Audio Segment.");
         return;
       }
 
@@ -45,38 +45,58 @@ export const Uploader: React.FC<UploaderProps> = ({ onFileSelect, isLoading }) =
     <div className="w-full">
       {!selectedFile ? (
         <label className={`
-          flex flex-col items-center justify-center w-full h-64 
-          border-2 border-dashed rounded-2xl cursor-pointer
-          transition-all duration-300 group
-          ${isLoading ? 'opacity-50 pointer-events-none' : 'border-slate-700 hover:border-blue-500 hover:bg-blue-500/5'}
+          relative flex flex-col items-center justify-center w-full h-80 
+          bg-black/40 border-2 border-dashed rounded-3xl cursor-pointer
+          transition-all duration-500 group overflow-hidden
+          ${isLoading ? 'opacity-30 pointer-events-none' : 'border-[#4aa3b8]/20 hover:border-[#4aa3b8] hover:bg-[#4aa3b8]/5'}
         `}>
-          <div className="flex flex-col items-center justify-center pt-5 pb-6">
-            <div className="p-4 bg-slate-800 rounded-full mb-4 group-hover:bg-blue-600 transition-colors">
-              <Upload className="w-8 h-8 text-slate-400 group-hover:text-white" />
+          {/* Animated Target Lines */}
+          <div className="absolute top-0 left-1/2 w-[1px] h-full bg-[#4aa3b8]/10 group-hover:bg-[#4aa3b8]/30 transition-colors" />
+          <div className="absolute left-0 top-1/2 h-[1px] w-full bg-[#4aa3b8]/10 group-hover:bg-[#4aa3b8]/30 transition-colors" />
+          
+          <div className="relative z-10 flex flex-col items-center justify-center px-10 text-center">
+            <div className="mb-6 relative">
+              <div className="p-6 bg-slate-900 rounded-2xl border border-white/5 group-hover:border-[#4aa3b8]/50 group-hover:shadow-[0_0_30px_rgba(74,163,184,0.2)] transition-all">
+                <FolderSearch className="w-10 h-10 text-slate-500 group-hover:text-[#4aa3b8] transition-colors" />
+              </div>
+              <Fingerprint className="absolute -bottom-2 -right-2 w-6 h-6 text-orange-500/50 group-hover:text-orange-500 transition-colors" />
             </div>
-            <p className="mb-2 text-sm text-slate-300">
-              <span className="font-semibold">Click to upload</span> or drag and drop
+            
+            <p className="mb-2 text-xs text-slate-300 font-bold uppercase tracking-[0.2em] mono">
+              Select <span className="text-[#4aa3b8]">Target File</span>
             </p>
-            <p className="text-xs text-slate-500 mono">WAV, MP3, or FLAC (max 10MB)</p>
+            <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mt-2 mono">
+              Acceptable Formats: WAV // MP3 // FLAC
+            </p>
           </div>
           <input type="file" className="hidden" accept="audio/*" onChange={handleFileChange} />
         </label>
       ) : (
-        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-blue-600/20 rounded-xl">
-              <FileAudio className="w-6 h-6 text-blue-400" />
+        <div className="bg-black/60 border border-[#4aa3b8]/30 rounded-3xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 backdrop-blur-md relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-1 h-full bg-[#4aa3b8] opacity-50" />
+          
+          <div className="flex items-center gap-6">
+            <div className="p-4 bg-[#4aa3b8]/10 rounded-2xl border border-[#4aa3b8]/20 group-hover:bg-[#4aa3b8]/20 transition-all">
+              <FileAudio className="w-8 h-8 text-[#4aa3b8]" />
             </div>
-            <div>
-              <p className="font-medium text-slate-200">{selectedFile.name}</p>
-              <p className="text-xs text-slate-500">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB • {selectedFile.type}</p>
+            <div className="text-left">
+              <p className="font-black text-white uppercase tracking-tight mb-1 mono text-lg">{selectedFile.name}</p>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em] mono flex items-center gap-3">
+                <span>SIZE: {(selectedFile.size / 1024 / 1024).toFixed(2)} MB</span>
+                <span className="w-1 h-1 bg-slate-700 rounded-full" />
+                <span>MIME: {selectedFile.type.toUpperCase()}</span>
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <audio controls src={selectedFile.previewUrl} className="h-10 opacity-70 hover:opacity-100 transition-opacity" />
+          
+          <div className="flex items-center gap-6 w-full md:w-auto">
+            <div className="flex-1 md:w-48">
+              <audio controls src={selectedFile.previewUrl} className="w-full h-8 opacity-40 hover:opacity-100 transition-all invert" />
+            </div>
             <button 
               onClick={clearFile}
-              className="p-2 hover:bg-red-500/20 hover:text-red-400 text-slate-500 rounded-lg transition-colors"
+              className="p-3 bg-red-500/10 hover:bg-red-500 hover:text-white text-red-500 rounded-xl border border-red-500/20 transition-all"
+              title="Purge Selection"
             >
               <X className="w-5 h-5" />
             </button>

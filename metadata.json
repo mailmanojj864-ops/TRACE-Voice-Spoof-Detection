@@ -2,6 +2,6 @@
   "requestFramePermissions": [
     "microphone"
   ],
-  "name": "",
-  "description": ""
+  "name": "TRACE",
+  "description": "High-fidelity synthetic speech detection using AASIST HtrgGAT architecture."
 }

@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, Square, Volume2, Timer, AlertCircle, ShieldCheck, Settings } from 'lucide-react';
+import { Mic, Square, Volume2, Timer, AlertCircle, ShieldCheck, Activity, Radio } from 'lucide-react';
 import { FileData } from '../types';
 
 interface AudioRecorderProps {
@@ -11,7 +11,6 @@ interface AudioRecorderProps {
 export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecordingComplete, isLoading }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [duration, setDuration] = useState(0);
-  const [permissionStatus, setPermissionStatus] = useState<'prompt' | 'granted' | 'denied'>('prompt');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -23,41 +22,16 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecordingComplet
   const analyserRef = useRef<AnalyserNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  useEffect(() => {
-    // Attempt to check permission status if supported
-    if (navigator.permissions && navigator.permissions.query) {
-      navigator.permissions.query({ name: 'microphone' as PermissionName })
-        .then((result) => {
-          setPermissionStatus(result.state as 'prompt' | 'granted' | 'denied');
-          result.onchange = () => {
-            setPermissionStatus(result.state as 'prompt' | 'granted' | 'denied');
-          };
-        })
-        .catch((err) => {
-          console.debug("Permission query not supported or failed:", err);
-        });
-    }
-  }, []);
-
   const startRecording = async () => {
     setErrorMessage(null);
-    
-    // Check for Secure Context
-    if (!window.isSecureContext) {
-      setErrorMessage("Microphone access requires a secure context (HTTPS). Please ensure you are viewing this via a secure connection.");
-      return;
-    }
-
-    // Check for MediaDevices API
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setErrorMessage("Your browser does not support audio recording. Please try a modern browser like Chrome, Firefox, or Safari.");
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setErrorMessage("I/O ERROR: No audio capture devices detected on local system.");
       return;
     }
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
-      setPermissionStatus('granted');
       
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
@@ -68,16 +42,14 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecordingComplet
       const analyser = audioContext.createAnalyser();
       const source = audioContext.createMediaStreamSource(stream);
       source.connect(analyser);
-      analyser.fftSize = 256;
+      analyser.fftSize = 1024;
       
       audioContextRef.current = audioContext;
       analyserRef.current = analyser;
-      drawWaveform();
+      drawOscilloscope();
 
       mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
+        if (event.data.size > 0) audioChunksRef.current.push(event.data);
       };
 
       mediaRecorder.onstop = async () => {
@@ -86,7 +58,7 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecordingComplet
         reader.onloadend = () => {
           const base64 = (reader.result as string).split(',')[1];
           onRecordingComplete({
-            name: `trace-sample-${new Date().getTime()}.wav`,
+            name: `TRACE_SIG_${Date.now()}.wav`,
             size: audioBlob.size,
             type: 'audio/wav',
             base64: base64,
@@ -100,32 +72,10 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecordingComplet
       mediaRecorder.start();
       setIsRecording(true);
       setDuration(0);
-      timerRef.current = window.setInterval(() => {
-        setDuration(prev => prev + 1);
-      }, 1000);
+      timerRef.current = window.setInterval(() => setDuration(prev => prev + 1), 1000);
     } catch (err: any) {
-      console.error("Error accessing microphone:", err);
       cleanupStream();
-      
-      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError' || err.message === 'Permission denied') {
-        setPermissionStatus('denied');
-        setErrorMessage("Microphone access was denied. To use TRACE sensors, please click the lock icon in your browser's address bar and enable Microphone permissions.");
-      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        setErrorMessage("No microphone found. Please connect a recording device and try again.");
-      } else {
-        setErrorMessage(`Microphone error: ${err.message || 'The system could not initialize the audio stream.'}`);
-      }
-    }
-  };
-
-  const cleanupStream = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-    if (audioContextRef.current) {
-      audioContextRef.current.close().catch(() => {});
-      audioContextRef.current = null;
+      setErrorMessage(`HARDWARE_LINK_FAIL: ${err.message}`);
     }
   };
 
@@ -138,121 +88,139 @@ export const AudioRecorder: React.FC<AudioRecorderProps> = ({ onRecordingComplet
     }
   };
 
-  const drawWaveform = () => {
+  const cleanupStream = () => {
+    streamRef.current?.getTracks().forEach(t => t.stop());
+    audioContextRef.current?.close();
+  };
+
+  const drawOscilloscope = () => {
     if (!canvasRef.current || !analyserRef.current) return;
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const bufferLength = analyserRef.current.frequencyBinCount;
+    const ctx = canvas.getContext('2d')!;
+    const analyser = analyserRef.current;
+    const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
 
-    const renderFrame = () => {
-      animationRef.current = requestAnimationFrame(renderFrame);
-      analyserRef.current?.getByteFrequencyData(dataArray);
+    const render = () => {
+      animationRef.current = requestAnimationFrame(render);
+      analyser.getByteTimeDomainData(dataArray);
 
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.fillStyle = 'rgba(5, 5, 5, 0.5)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      const barWidth = (canvas.width / bufferLength) * 2.5;
-      let barHeight;
+      // Draw Grid
+      ctx.strokeStyle = 'rgba(74, 163, 184, 0.05)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < canvas.width; i += 40) {
+        ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
+      }
+      for (let i = 0; i < canvas.height; i += 40) {
+        ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
+      }
+
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = isRecording ? '#ff7a18' : '#4aa3b8';
+      ctx.beginPath();
+
+      const sliceWidth = canvas.width * 1.0 / bufferLength;
       let x = 0;
 
       for (let i = 0; i < bufferLength; i++) {
-        barHeight = (dataArray[i] / 255) * canvas.height;
-        ctx.fillStyle = isRecording ? `rgb(249, 115, 22)` : `rgb(71, 85, 105)`;
-        ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
-        x += barWidth + 1;
+        const v = dataArray[i] / 128.0;
+        const y = v * canvas.height / 2;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+        x += sliceWidth;
       }
+
+      ctx.lineTo(canvas.width, canvas.height / 2);
+      ctx.stroke();
+
+      // Add glow
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = isRecording ? 'rgba(255, 122, 24, 0.5)' : 'rgba(74, 163, 184, 0.5)';
     };
-    renderFrame();
+    render();
   };
 
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
-      cleanupStream();
-    };
+  useEffect(() => () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    cleanupStream();
   }, []);
 
   return (
-    <div className="w-full bg-black/40 border border-white/5 rounded-3xl p-8 flex flex-col items-center gap-8">
+    <div className="w-full bg-black/60 border border-[#4aa3b8]/20 rounded-[2rem] p-8 md:p-12 flex flex-col items-center gap-10 backdrop-blur-lg">
+      
       {errorMessage && (
-        <div className="w-full p-5 bg-orange-500/10 border border-orange-500/20 rounded-2xl flex items-start gap-4 text-orange-400 text-xs leading-relaxed animate-in fade-in zoom-in-95 duration-300">
-          <div className="p-2 bg-orange-500/20 rounded-lg shrink-0">
-            <AlertCircle className="w-4 h-4" />
-          </div>
-          <div className="space-y-2">
-            <p className="font-bold uppercase tracking-widest text-[10px]">Permission Error Detected</p>
-            <p className="text-slate-300">{errorMessage}</p>
-            {permissionStatus === 'denied' && (
-              <div className="flex items-center gap-2 mt-2 pt-2 border-t border-orange-500/10">
-                <Settings className="w-3 h-3" />
-                <span className="text-[9px] uppercase font-bold tracking-tighter">Check site settings in your address bar</span>
-              </div>
-            )}
-          </div>
+        <div className="w-full p-4 bg-orange-950/20 border-l-4 border-orange-500 text-orange-400 text-[10px] font-bold uppercase tracking-widest mono flex items-center gap-4">
+          <AlertCircle className="w-5 h-5" />
+          {errorMessage}
         </div>
       )}
 
-      <div className="relative w-full h-32 bg-black/80 rounded-2xl overflow-hidden border border-white/5 shadow-inner">
-        <canvas ref={canvasRef} className="w-full h-full" width={800} height={128} />
-        {!isRecording && !duration && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-700 text-[10px] uppercase font-black tracking-[0.2em] gap-3">
-            <div className="p-3 bg-white/5 rounded-full animate-pulse">
-               <Volume2 className="w-5 h-5 opacity-40" />
-            </div>
-            Sensor Array Offline
+      {/* Scope Interface */}
+      <div className="relative w-full h-48 bg-[#050505] rounded-2xl overflow-hidden border border-white/5 shadow-inner group">
+        <div className="absolute top-4 left-6 flex items-center gap-3 z-20">
+          <Activity className={`w-4 h-4 ${isRecording ? 'text-orange-500 animate-pulse' : 'text-[#4aa3b8]'}`} />
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] mono text-slate-500">Signal Scope // CH_01</span>
+        </div>
+        
+        <canvas ref={canvasRef} className="w-full h-full opacity-80" width={1000} height={200} />
+        
+        {!isRecording && duration === 0 && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-700 text-[10px] uppercase font-black tracking-[0.4em] gap-4">
+            <Radio className="w-8 h-8 opacity-20" />
+            Sensor Standby
           </div>
         )}
       </div>
 
-      <div className="flex flex-col items-center gap-8 w-full">
+      <div className="flex flex-col md:flex-row items-center justify-between w-full gap-8">
         <div className="flex items-center gap-12">
           {!isRecording ? (
             <button
               onClick={startRecording}
               disabled={isLoading}
-              className="flex flex-col items-center gap-3 group transition-all active:scale-95 disabled:opacity-30"
+              className="flex flex-col items-center gap-4 group disabled:opacity-30"
             >
-              <div className="p-8 bg-orange-600 rounded-full shadow-2xl shadow-orange-600/30 group-hover:bg-orange-500 transition-all border-8 border-black group-hover:border-white/10">
-                <Mic className="w-10 h-10 text-white" />
+              <div className="p-10 bg-black border-2 border-[#4aa3b8]/30 rounded-full shadow-[0_0_40px_rgba(74,163,184,0.1)] group-hover:border-[#4aa3b8] group-hover:shadow-[0_0_50px_rgba(74,163,184,0.2)] transition-all">
+                <Mic className="w-12 h-12 text-[#4aa3b8]" />
               </div>
-              <span className="text-[10px] font-black text-slate-500 group-hover:text-orange-500 uppercase tracking-[0.2em] transition-colors">Start TRACE Stream</span>
+              <span className="text-[10px] font-black text-slate-500 group-hover:text-[#4aa3b8] uppercase tracking-[0.3em] mono transition-colors">Arm Sensor</span>
             </button>
           ) : (
             <button
               onClick={stopRecording}
-              className="flex flex-col items-center gap-3 group transition-all active:scale-95"
+              className="flex flex-col items-center gap-4 group"
             >
-              <div className="p-8 bg-red-600 rounded-full shadow-2xl shadow-red-500/40 animate-pulse border-8 border-black">
-                <Square className="w-10 h-10 text-white" />
+              <div className="p-10 bg-black border-2 border-orange-500 rounded-full shadow-[0_0_40px_rgba(255,122,24,0.2)] animate-pulse">
+                <Square className="w-12 h-12 text-orange-500 fill-orange-500" />
               </div>
-              <span className="text-[10px] font-black text-red-500 uppercase tracking-[0.2em]">Capture Data Point</span>
+              <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.3em] mono">Disarm & Sync</span>
             </button>
           )}
         </div>
 
-        <div className="flex items-center gap-6 text-slate-500 w-full max-w-sm">
-          <div className="flex-1 flex items-center gap-4 px-6 py-3 bg-black/60 rounded-2xl border border-white/5 shadow-inner">
-            <Timer className="w-4 h-4 text-orange-500" />
-            <span className="text-2xl font-black mono text-slate-200 tracking-tighter">
-              {Math.floor(duration / 60).toString().padStart(2, '0')}:{(duration % 60).toString().padStart(2, '0')}
+        <div className="flex flex-col gap-4 w-full md:w-auto">
+          <div className="flex items-center gap-4 px-10 py-5 bg-black/80 rounded-2xl border border-white/5 shadow-inner">
+            <Timer className="w-5 h-5 text-orange-500" />
+            <span className="text-4xl font-black mono text-white tracking-tighter">
+              {Math.floor(duration / 60).toString().padStart(2, '0')}:{ (duration % 60).toString().padStart(2, '0') }
             </span>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center gap-4">
             {isRecording && (
-              <div className="flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-xl">
+              <div className="flex items-center gap-3 px-6 py-2 bg-red-500/10 border border-red-500/20 rounded-full">
                 <div className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
-                <span className="text-[9px] font-black text-red-500 uppercase tracking-widest">Recording</span>
+                <span className="text-[10px] font-black text-red-500 uppercase tracking-widest mono">Capturing...</span>
               </div>
             )}
-            {permissionStatus === 'granted' && !isRecording && (
-              <div className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
-                <ShieldCheck className="w-3 h-3 text-emerald-500" />
-                <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Linked</span>
+            {!isRecording && (
+              <div className="flex items-center gap-3 px-6 py-2 bg-[#4aa3b8]/10 border border-[#4aa3b8]/20 rounded-full">
+                <ShieldCheck className="w-4 h-4 text-[#4aa3b8]" />
+                <span className="text-[10px] font-black text-[#4aa3b8] uppercase tracking-widest mono">Linked</span>
               </div>
             )}
           </div>

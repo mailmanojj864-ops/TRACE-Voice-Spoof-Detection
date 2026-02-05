@@ -4,39 +4,152 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRACE | AI Voice Authenticity</title>
+    <title>TRACE | Forensic Audio Intel</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --trace-black: #06080f; 
+            --trace-deep: #030407;
+            --trace-blue: #0f172a;
+            --trace-orange: #ff7a18;
+            --trace-cyan: #4aa3b8;
+            --trace-glow: rgba(74, 163, 184, 0.12);
+            --grid-color: rgba(74, 163, 184, 0.05);
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            background: radial-gradient(circle at top, #0f0f0f, #000000);
+            background-color: var(--trace-black);
+            background-image: 
+                radial-gradient(circle at 50% 0%, #1e293b 0%, var(--trace-black) 70%),
+                radial-gradient(circle at 100% 100%, #0f172a 0%, transparent 40%),
+                radial-gradient(circle at 0% 50%, #111827 0%, transparent 50%);
             color: #e5e7eb;
-            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
         }
-        .mono {
+
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        @keyframes pulseNode {
+            0%, 100% { transform: scale(1); opacity: 0.1; filter: blur(2px); }
+            50% { transform: scale(1.5); opacity: 0.4; filter: blur(0px); }
+        }
+
+        .neural-node {
+            position: fixed;
+            width: 2px;
+            height: 2px;
+            background: var(--trace-cyan);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        @keyframes scanner {
+            0% { transform: translateY(-100vh); opacity: 0; }
+            10% { opacity: 0.3; }
+            90% { opacity: 0.3; }
+            100% { transform: translateY(100vh); opacity: 0; }
+        }
+
+        .scan-line-v2 {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--trace-cyan), var(--trace-orange), transparent);
+            box-shadow: 0 0 20px var(--trace-cyan);
+            z-index: 50;
+            pointer-events: none;
+            animation: scanner 8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        .cyber-grid-v2 {
+            position: fixed;
+            inset: 0;
+            background-size: 100px 100px;
+            background-image: 
+                linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+            mask-image: radial-gradient(circle at center, black, transparent 85%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .hud-overlay {
+            position: fixed;
+            inset: 0;
+            background: url("https://www.transparenttextures.com/patterns/stardust.png");
+            opacity: 0.05;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .matrix-bg {
+            position: fixed;
+            inset: 0;
+            background: url("https://www.transparenttextures.com/patterns/carbon-fibre.png");
+            opacity: 0.2;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        @keyframes radarExpandV2 {
+            0% { transform: scale(0.5); opacity: 0; border-width: 4px; }
+            50% { opacity: 0.1; border-width: 1px; }
+            100% { transform: scale(2); opacity: 0; border-width: 0.1px; }
+        }
+        .radar-v2 {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 60vw;
+            height: 60vw;
+            border: 1px solid var(--trace-cyan);
+            border-radius: 50%;
+            translate: -50% -50%;
+            pointer-events: none;
+            z-index: 0;
+            animation: radarExpandV2 12s linear infinite;
+        }
+
+        .coord-overlay {
+            position: fixed;
+            inset: 0;
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: repeat(12, 1fr);
+            pointer-events: none;
+            z-index: 2;
+            opacity: 0.06;
             font-family: 'JetBrains Mono', monospace;
+            font-size: 8px;
+            color: var(--trace-cyan);
+            padding: 40px;
         }
-        #trace-title {
-            text-shadow: 0 0 25px rgba(249,115,22,0.4);
+
+        .watermark-seal {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 100;
+            opacity: 0.3;
+            transition: opacity 0.3s;
         }
-        .trace-panel {
-            background: rgba(20, 20, 20, 0.85);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+        .watermark-seal:hover { opacity: 0.8; }
+
+        @keyframes logScroll {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-100%); }
         }
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #000;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #222;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #333;
-        }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--trace-deep); }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--trace-cyan); }
     </style>
 <script type="importmap">
 {
@@ -45,13 +158,29 @@
     "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
     "react/": "https://esm.sh/react@^19.2.4/",
     "@google/genai": "https://esm.sh/@google/genai@^1.39.0",
-    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
-    "recharts": "https://esm.sh/recharts@^3.7.0"
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0"
   }
 }
 </script>
 </head>
 <body>
+    <div class="matrix-bg"></div>
+    <div class="hud-overlay"></div>
+    <div class="cyber-grid-v2"></div>
+    <div class="scan-line-v2"></div>
+    
+    <div class="radar-v2" style="animation-delay: 0s"></div>
+    <div class="radar-v2" style="animation-delay: 4s; width: 40vw; height: 40vw;"></div>
+    
+    <div class="neural-node" style="top: 20%; left: 10%; animation: pulseNode 5s infinite;"></div>
+    <div class="neural-node" style="top: 70%; left: 85%; animation: pulseNode 7s infinite;"></div>
+    <div class="neural-node" style="top: 40%; left: 50%; animation: pulseNode 6s infinite;"></div>
+
+    <div class="coord-overlay">
+        <div>[04:22]</div><div></div><div>[SIG_INT]</div><div></div><div>[GAT_L3]</div><div></div><div></div><div>[FORENSIC]</div><div></div><div>[AUTH_OK]</div><div></div><div>[0x9F]</div>
+        <div></div><div>[SYS_02]</div><div></div><div></div><div></div><div>[NODE_B]</div><div></div><div></div><div></div><div>[TRACE]</div><div></div><div></div>
+    </div>
+
     <div id="root"></div>
 </body>
 </html>

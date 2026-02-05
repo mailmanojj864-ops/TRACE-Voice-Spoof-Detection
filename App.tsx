@@ -4,11 +4,12 @@ import { Layout } from './components/Layout';
 import { Uploader } from './components/Uploader';
 import { AudioRecorder } from './components/AudioRecorder';
 import { ResultView } from './components/ResultView';
+import { ProcessingView } from './components/ProcessingView';
 import { EducationalPanel } from './components/EducationalPanel';
 import { CodeViewer } from './components/CodeViewer';
 import { analyzeAudio } from './services/geminiService';
 import { AnalysisReport, FileData } from './types';
-import { Zap, AudioLines, FileUp, Mic2, Code2, ShieldAlert, Cpu } from 'lucide-react';
+import { Zap, FileUp, Mic2, Code2, ShieldAlert, Cpu, Activity, Crosshair, BarChart3, Radio } from 'lucide-react';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'upload' | 'record' | 'code'>('upload');
@@ -17,10 +18,21 @@ const App: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [systemUptime, setSystemUptime] = useState(0);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [randomVal, setRandomVal] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => setSystemUptime(prev => prev + 1), 1000);
-    return () => clearInterval(interval);
+    const valInterval = setInterval(() => setRandomVal(Math.floor(Math.random() * 9999)), 500);
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => {
+      clearInterval(interval);
+      clearInterval(valInterval);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
   }, []);
 
   const handleFileSelect = (file: FileData | null) => {
@@ -33,7 +45,7 @@ const App: React.FC = () => {
     setReport(null);
     setFileData(null);
     setError(null);
-    // Smooth scroll back to top of analysis lab
+    setIsAnalyzing(false);
     document.getElementById('analysis-lab')?.scrollIntoView({ behavior: 'smooth' });
   };
 
@@ -41,137 +53,188 @@ const App: React.FC = () => {
     if (!fileData) return;
     setIsAnalyzing(true);
     setError(null);
+    setReport(null);
+    
+    // Scroll to top of lab when analysis starts to show full processing view
+    document.getElementById('analysis-lab')?.scrollIntoView({ behavior: 'smooth' });
+
     try {
       const result = await analyzeAudio(fileData.base64, fileData.type);
-      setReport(result);
-      // Smooth scroll to results
+      // Brief artificial delay to let the processing visuals shine
       setTimeout(() => {
-        document.getElementById('results')?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
+        setReport(result);
+        setIsAnalyzing(false);
+        setTimeout(() => {
+            document.getElementById('analysis-lab')?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }, 4000); 
     } catch (err: any) {
-      setError(err.message || "Analysis failed. Please ensure the audio is clear.");
-    } finally {
+      setError(err.message || "Forensic Pipeline Error: Data corruption or timeout.");
       setIsAnalyzing(false);
     }
   };
 
   return (
     <Layout>
-      <div className="flex flex-col gap-12">
-        {/* System Dashboard */}
-        <div className="flex items-center justify-between px-6 py-3 bg-black/40 border border-white/5 rounded-2xl shadow-sm">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-              <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest">AASIST Core v1.0.4 Online</span>
-            </div>
-            <div className="h-4 w-[1px] bg-white/5" />
-            <div className="flex items-center gap-2">
-              <Cpu className="w-3 h-3 text-slate-600" />
-              <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest">HtrgGAT Accelerated</span>
-            </div>
+      {/* Tactical Mouse Reticle Effect */}
+      <div 
+        className="fixed w-64 h-64 border border-white/[0.02] rounded-full pointer-events-none z-[50] hidden md:block"
+        style={{ 
+          left: mousePos.x, 
+          top: mousePos.y, 
+          transform: 'translate(-50%, -50%)',
+          transition: 'transform 0.15s cubic-bezier(0.23, 1, 0.32, 1)'
+        }}
+      >
+        <div className="absolute top-1/2 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#4aa3b8]/20 to-transparent" />
+        <div className="absolute left-1/2 top-0 h-full w-[1px] bg-gradient-to-b from-transparent via-[#4aa3b8]/20 to-transparent" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+            <Crosshair className="w-5 h-5 text-[#4aa3b8]/40" />
+            <div className="absolute w-20 h-20 border border-orange-500/10 rounded-sm rotate-45" />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-10 md:gap-16 relative z-20">
+        
+        {/* Page 1 & Page 2 & Page 3 Controller */}
+        <div className="flex flex-col md:flex-row items-stretch justify-between bg-black/80 border border-white/10 rounded-[2rem] backdrop-blur-3xl shadow-[0_0_80px_rgba(0,0,0,0.9)] overflow-hidden">
+          <div className="flex flex-col md:flex-row items-center">
+             <div className="px-10 py-8 border-b md:border-b-0 md:border-r border-white/10 flex items-center gap-6">
+                <div className="relative">
+                    <div className="w-4 h-4 rounded-full bg-emerald-500 animate-pulse" />
+                    <div className="absolute inset-0 w-4 h-4 rounded-full bg-emerald-400 blur-md opacity-40 animate-ping" />
+                </div>
+                <div className="flex flex-col">
+                    <span className="text-[12px] font-black uppercase text-emerald-500 tracking-[0.3em] mono italic">BIO_LINK: LIVE</span>
+                    <span className="text-[8px] text-slate-500 mono font-black">ENCRYPTED_SIGNAL_STREAM</span>
+                </div>
+             </div>
+             <div className="px-10 py-8 flex items-center gap-6 border-b md:border-b-0 md:border-r border-white/10 bg-white/[0.02]">
+                <Cpu className="w-5 h-5 text-orange-500" />
+                <div className="flex flex-col">
+                    <span className="text-[12px] font-black uppercase text-slate-200 tracking-[0.3em] mono italic">ENGINE: AASIST_GRAPH_V2.5</span>
+                    <span className="text-[8px] text-slate-600 mono font-black">STRATAGEM_CORE</span>
+                </div>
+             </div>
           </div>
-          <div className="text-[9px] font-black uppercase text-slate-700 tracking-widest mono hidden sm:block">
-            STREAMS_ACTIVE: 01 // SESSION_TIME: {Math.floor(systemUptime / 60)}m {systemUptime % 60}s
+          
+          <div className="flex flex-1 items-center justify-between px-10 py-8 bg-black/40">
+             <div className="flex items-center gap-12">
+                <div className="flex flex-col items-start">
+                    <div className="flex items-center gap-2 mb-1">
+                        <Activity className="w-4 h-4 text-[#4aa3b8]" />
+                        <span className="text-[10px] font-black text-[#4aa3b8] uppercase tracking-widest mono">Kernel Load</span>
+                    </div>
+                    <div className="flex gap-1 h-1.5 w-32">
+                        <div className="flex-1 bg-[#4aa3b8]" />
+                        <div className="flex-1 bg-[#4aa3b8]" />
+                        <div className="flex-1 bg-[#4aa3b8]/40" />
+                    </div>
+                </div>
+                <div className="flex flex-col items-start">
+                    <div className="flex items-center gap-2 mb-1">
+                        <BarChart3 className="w-4 h-4 text-orange-500" />
+                        <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest mono">Entropy</span>
+                    </div>
+                    <span className="text-[12px] font-black text-white mono italic">0.{randomVal}</span>
+                </div>
+             </div>
+
+             <div className="hidden lg:flex flex-col items-end pl-12 border-l border-white/5">
+                <span className="text-[9px] font-black text-slate-600 uppercase tracking-[0.4em] mb-1">Session Uptime</span>
+                <span className="text-2xl font-black text-orange-500 italic mono tracking-tighter">
+                    {Math.floor(systemUptime / 60).toString().padStart(2, '0')}:{(systemUptime % 60).toString().padStart(2, '0')}
+                </span>
+             </div>
           </div>
         </div>
 
-        {/* Main Interface Section */}
-        {!report && (
-          <section id="analysis-lab" className="trace-panel rounded-[2.5rem] p-8 md:p-12 shadow-2xl relative overflow-hidden transition-all duration-500">
-            <div className="absolute top-0 right-0 p-8 opacity-[0.03]">
-              <AudioLines className="w-64 h-64 text-orange-500" />
-            </div>
-            
-            <div className="relative z-10 max-w-2xl mx-auto text-center mb-10">
-              <h2 className="text-3xl font-black text-white mb-4 uppercase tracking-tighter italic">Forensic Inference Lab</h2>
-              <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-10">Select an input stream to begin deep spectral analysis</p>
-              
-              {/* Tab Navigation */}
-              <div id="documentation-section" className="flex items-center justify-center p-1.5 bg-black rounded-2xl border border-white/5 mb-10 w-fit mx-auto shadow-inner">
-                <TabButton 
-                  active={activeTab === 'upload'} 
-                  onClick={() => {setActiveTab('upload'); setReport(null);}} 
-                  icon={<FileUp className="w-4 h-4" />} 
-                  label="File Analysis" 
-                />
-                <TabButton 
-                  active={activeTab === 'record'} 
-                  onClick={() => {setActiveTab('record'); setReport(null);}} 
-                  icon={<Mic2 className="w-4 h-4" />} 
-                  label="Direct Sensor" 
-                />
-                <TabButton 
-                  active={activeTab === 'code'} 
-                  onClick={() => setActiveTab('code')} 
-                  icon={<Code2 className="w-4 h-4" />} 
-                  label="System Source" 
-                />
+        {/* Main Interface Wrapper */}
+        <section id="analysis-lab" className="forensic-panel rounded-[3rem] p-8 md:p-24 relative overflow-hidden transition-all duration-700 shadow-[0_0_120px_rgba(0,0,0,1)] group">
+           
+            {/* Condition 1: Input Phase (Page 1) */}
+            {!isAnalyzing && !report && (
+              <div className="relative z-10 max-w-4xl mx-auto animate-in fade-in slide-in-from-top-4 duration-700">
+                <div className="text-center mb-20">
+                  <div className="flex flex-col items-center gap-6 mb-12">
+                    <div className="px-6 py-2 bg-white/5 border border-white/10 rounded-full flex items-center gap-3">
+                      <Radio className="w-3 h-3 text-[#4aa3b8] animate-pulse" />
+                      <span className="text-[11px] font-black text-[#4aa3b8] uppercase tracking-[0.5em] mono">Signal Intercept Laboratory</span>
+                    </div>
+                    <h2 className="text-6xl md:text-8xl font-black text-white tracking-tighter italic uppercase flex items-center justify-center gap-6 drop-shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+                      Analysis Hub
+                    </h2>
+                    <div className="h-1.5 w-32 bg-orange-600 shadow-[0_0_40px_rgba(234,88,12,0.6)] rounded-full" />
+                  </div>
+                  
+                  <div className="flex flex-wrap items-center justify-center p-2 bg-black/90 rounded-[3rem] border border-white/10 mb-20 w-fit mx-auto shadow-2xl backdrop-blur-3xl overflow-hidden relative">
+                    <TacticalTab 
+                      active={activeTab === 'upload'} 
+                      onClick={() => setActiveTab('upload')} 
+                      icon={<FileUp className="w-4 h-4" />} 
+                      label="Import Signal" 
+                    />
+                    <TacticalTab 
+                      active={activeTab === 'record'} 
+                      onClick={() => setActiveTab('record')} 
+                      icon={<Mic2 className="w-4 h-4" />} 
+                      label="Live Capture" 
+                    />
+                    <TacticalTab 
+                      active={activeTab === 'code'} 
+                      onClick={() => setActiveTab('code')} 
+                      icon={<Code2 className="w-4 h-4" />} 
+                      label="GAT Logic" 
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-center gap-20">
+                  <div className="w-full">
+                    {activeTab === 'upload' && <Uploader onFileSelect={handleFileSelect} isLoading={false} />}
+                    {activeTab === 'record' && <AudioRecorder onRecordingComplete={handleFileSelect} isLoading={false} />}
+                    {activeTab === 'code' && <CodeViewer />}
+                  </div>
+                  
+                  {activeTab !== 'code' && fileData && (
+                    <button 
+                      onClick={handleAnalyze}
+                      className="group relative flex items-center gap-12 px-24 py-12 bg-black border-2 border-orange-500/50 hover:border-orange-500 text-orange-500 hover:text-white hover:bg-orange-600 rounded-2xl font-black transition-all hover:scale-105 shadow-[0_20px_60px_rgba(234,88,12,0.2)] mono uppercase tracking-[0.4em] italic overflow-hidden"
+                    >
+                      <Zap className="w-8 h-8 animate-pulse text-orange-500 group-hover:text-white" />
+                      <span className="text-2xl">Deploy TRACE Probe</span>
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="max-w-3xl mx-auto flex flex-col items-center gap-10">
-              {activeTab === 'upload' && (
-                <Uploader onFileSelect={handleFileSelect} isLoading={isAnalyzing} />
-              )}
-              
-              {activeTab === 'record' && (
-                <AudioRecorder onRecordingComplete={handleFileSelect} isLoading={isAnalyzing} />
-              )}
+            {/* Condition 2: Processing Phase (Page 2) */}
+            {isAnalyzing && !report && <ProcessingView />}
 
-              {activeTab === 'code' && (
-                <CodeViewer />
-              )}
-              
-              {activeTab !== 'code' && fileData && !report && !isAnalyzing && (
-                <button 
-                  onClick={handleAnalyze}
-                  disabled={isAnalyzing}
-                  className="group relative inline-flex items-center gap-6 px-16 py-8 bg-orange-600 hover:bg-orange-500 text-white rounded-3xl font-black transition-all hover:scale-105 active:scale-95 shadow-[0_0_50px_rgba(234,88,12,0.3)] disabled:opacity-50"
-                >
-                  <Zap className="w-7 h-7 fill-current" />
-                  <span className="text-xl tracking-tighter italic uppercase">Initiate Trace Analysis</span>
-                </button>
-              )}
+            {/* Condition 3: Result Phase (Page 3) */}
+            {report && (
+              <div className="relative z-10 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+                <ResultView report={report} onReset={handleReset} />
+              </div>
+            )}
 
-              {isAnalyzing && (
-                <div className="flex flex-col items-center gap-8 py-16 animate-pulse">
-                  <div className="relative">
-                    <div className="w-24 h-24 border-8 border-orange-500/10 rounded-full" />
-                    <div className="absolute inset-0 w-24 h-24 border-8 border-t-orange-500 rounded-full animate-spin" />
-                    <div className="absolute inset-0 blur-2xl bg-orange-500/30 animate-pulse rounded-full" />
-                  </div>
-                  <div className="text-center space-y-3">
-                    <p className="text-orange-400 font-black tracking-[0.4em] uppercase text-[10px] mb-2">Executing Spectro-Temporal Graph Attention</p>
-                    <p className="text-slate-600 text-[10px] font-black uppercase tracking-widest opacity-60">Status: Running Forward Pass...</p>
-                  </div>
-                </div>
-              )}
+            {error && !isAnalyzing && (
+              <div className="relative z-20 w-full mt-10 p-12 bg-red-950/20 border-2 border-red-500/40 rounded-[2.5rem] text-red-400 flex items-center gap-10">
+                <ShieldAlert className="w-10 h-10 text-red-500 animate-pulse" />
+                <p className="text-slate-400 leading-relaxed font-medium mono text-sm">{error}</p>
+              </div>
+            )}
+        </section>
 
-              {error && (
-                <div className="w-full p-8 bg-red-500/5 border border-red-500/20 rounded-3xl text-red-400 text-xs flex items-center gap-6 animate-in shake duration-500 shadow-lg">
-                  <div className="p-3 bg-red-500/20 rounded-2xl shadow-inner">
-                    <ShieldAlert className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="font-black uppercase tracking-[0.2em] text-[10px] mb-2 opacity-80">Trace Inference Interrupted</p>
-                    <p className="text-slate-400 leading-relaxed font-medium">{error}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* Results Section */}
-        {report && (
-          <section id="results" className="scroll-mt-12">
-            <ResultView report={report} onReset={handleReset} />
-          </section>
-        )}
-
-        {/* Educational Content */}
-        <section id="methodology-section" className={`scroll-mt-12 ${report ? 'opacity-30 grayscale hover:opacity-100 hover:grayscale-0 transition-all duration-700' : ''}`}>
+        {/* Methodology Content (Always there at bottom) */}
+        <section id="methodology-section" className={`scroll-mt-32 mb-48 transition-all duration-1000 ${isAnalyzing ? 'opacity-20 grayscale pointer-events-none scale-95' : 'opacity-100'}`}>
+          <div className="flex flex-col items-center mb-24 flicker-ui">
+             <div className="px-6 py-2 bg-white/5 border border-white/10 rounded-full mb-6">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.8em] mono">Research.Intelligence.Archive</span>
+             </div>
+             <div className="h-[2px] w-40 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+          </div>
           <EducationalPanel />
         </section>
       </div>
@@ -179,15 +242,15 @@ const App: React.FC = () => {
   );
 };
 
-const TabButton: React.FC<{ active: boolean; onClick: () => void; icon: React.ReactNode; label: string }> = ({ active, onClick, icon, label }) => (
+const TacticalTab: React.FC<{ active: boolean; onClick: () => void; icon: React.ReactNode; label: string }> = ({ active, onClick, icon, label }) => (
   <button 
     onClick={onClick}
     className={`
-      flex items-center gap-3 px-8 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all
-      ${active ? 'bg-orange-600 text-white shadow-[0_10px_20px_rgba(234,88,12,0.2)] scale-105' : 'text-slate-600 hover:text-slate-300'}
+      flex items-center gap-6 px-12 py-6 text-[12px] font-black uppercase tracking-[0.4em] transition-all border-b-4 mono rounded-3xl
+      ${active ? 'bg-orange-600/10 text-orange-500 border-orange-500 shadow-[0_0_50px_rgba(234,88,12,0.15)] italic' : 'text-slate-600 hover:text-slate-300 border-transparent'}
     `}
   >
-    {icon}
+    <div className={`${active ? 'animate-pulse' : ''}`}>{icon}</div>
     {label}
   </button>
 );
