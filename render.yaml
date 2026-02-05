@@ -1,0 +1,28 @@
+
+services:
+  # 1. THE FRONTEND (Static Site)
+  - type: static
+    name: trace-frontend
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: trace-backend
+          property: host
+
+  # 2. THE BACKEND (FastAPI Web Service)
+  - type: web
+    name: trace-backend
+    env: python
+    # Ensure you have a requirements.txt in your root or specify the path
+    buildCommand: pip install -r requirements.txt
+    # Adjust 'main:app' to match your FastAPI entry point (filename:variable)
+    startCommand: gunicorn -k uvicorn.workers.UvicornWorker main:app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: API_KEY
+        sync: false # Set this manually in the Render Dashboard
+      - key: PYTHON_VERSION
+        value: 3.10.0
