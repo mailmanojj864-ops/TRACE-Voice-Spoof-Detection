@@ -2,17 +2,18 @@
 import os
 import base64
 import json
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from google import genai
 from google.genai import types
 
+# Initialize FastAPI
 app = FastAPI(title="TRACE Forensic Engine")
 
-# Security: Allow CORS
+# CORS Configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -25,10 +26,13 @@ class AnalysisRequest(BaseModel):
     audio: str
     mime: str
 
-# API Routes must come BEFORE static files
+# ----------------------------------------------------------------
+# API ROUTES (Must be defined before static files)
+# ----------------------------------------------------------------
+
 @app.get("/api/health")
-def health():
-    return {"status": "online", "engine": "TRACE-AASIST-V2"}
+async def health():
+    return {"status": "online", "engine": "TRACE-AASIST-V2", "version": "2.5.1"}
 
 @app.post("/api/analyze")
 async def analyze_signal(request: AnalysisRequest):
@@ -61,37 +65,53 @@ async def analyze_signal(request: AnalysisRequest):
             )
         )
         
-        result_text = response.text
-        if not result_text:
-            raise ValueError("Empty response from AI engine")
+        if not response.text:
+            raise ValueError("AI engine returned an empty response.")
             
-        return json.loads(result_text)
+        return json.loads(response.text)
         
     except Exception as e:
-        print(f"Error: {str(e)}")
+        print(f"Deployment Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# Serve the React Frontend
-# 1. Try to serve specific files from 'dist'
-# 2. If path doesn't exist (like a React route), serve index.html
-if os.path.exists("dist"):
-    app.mount("/assets", StaticFiles(directory="dist/assets"), name="assets")
-    
-    @app.get("/{full_path:path}")
-    async def serve_frontend(full_path: str):
-        # Prevent infinite loops on API calls
-        if full_path.startswith("api/"):
-            raise HTTPException(status_code=404)
-            
-        file_path = os.path.join("dist", full_path)
-        if full_path != "" and os.path.isfile(file_path):
+# ----------------------------------------------------------------
+# FRONTEND SERVING (The fix for your website not showing)
+# ----------------------------------------------------------------
+
+# Define absolute paths to the dist folder
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DIST_DIR = os.path.join(BASE_DIR, "dist")
+
+if os.path.exists(DIST_DIR):
+    # Mount the assets folder (JS/CSS)
+    app.mount("/assets", StaticFiles(directory=os.path.join(DIST_DIR, "assets")), name="assets")
+
+    @app.get("/")
+    async def serve_index():
+        return FileResponse(os.path.join(DIST_DIR, "index.html"))
+
+    @app.get("/{rest_of_path:path}")
+    async def serve_spa(rest_of_path: str):
+        # If the file exists in dist, serve it (e.g. favicon.ico)
+        file_path = os.path.join(DIST_DIR, rest_of_path)
+        if os.path.isfile(file_path):
             return FileResponse(file_path)
-        return FileResponse("dist/index.html")
+        
+        # Otherwise, if it's not an API call, serve index.html for React routing
+        if not rest_of_path.startswith("api/"):
+            return FileResponse(os.path.join(DIST_DIR, "index.html"))
+        
+        return JSONResponse(status_code=404, content={"detail": "Not Found"})
 else:
     @app.get("/")
-    def fallback():
-        return {"status": "ready", "msg": "Frontend not built yet. Run 'npm run build'."}
+    async def welcome():
+        return {
+            "error": "Frontend build missing",
+            "message": "The /dist folder was not found. Ensure 'npm run build' completed successfully.",
+            "instructions": "Visit /api/health to check backend status."
+        }
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)

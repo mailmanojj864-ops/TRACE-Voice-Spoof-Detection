@@ -3,9 +3,9 @@ services:
   - type: web
     name: trace-fullstack-app
     env: python
-    # Combined Build: Build React first, then install Python deps
+    # Ensure node modules are installed, frontend is built, then python deps
     buildCommand: npm install && npm run build && pip install -r requirements.txt
-    # Run the unified FastAPI server
+    # Start command remains gunicorn for production stability
     startCommand: gunicorn -k uvicorn.workers.UvicornWorker main:app --bind 0.0.0.0:$PORT
     envVars:
       - key: API_KEY
