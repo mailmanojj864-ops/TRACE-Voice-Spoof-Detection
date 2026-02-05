@@ -9,14 +9,15 @@ export default defineConfig({
     'process.env': process.env
   },
   server: {
-    // Allows the dev server to be accessed from Render if needed
+    // Allows the dev server to be accessed from Render subdomains
     allowedHosts: ['.onrender.com']
   },
   preview: {
-    // Fixes the "Blocked Request" error on Render
+    // Fixes the "Blocked Request" error on Render production URLs
     allowedHosts: ['.onrender.com'],
-    // Ensure it uses the Render expected port
+    // Ensure it uses the Render default port
     port: 10000,
-    host: true
+    host: true,
+    strictPort: true
   }
 });

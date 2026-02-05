@@ -5,7 +5,7 @@ services:
     env: python
     # 1. Install Node deps 2. Build Frontend 3. Install Python deps
     buildCommand: npm install && npm run build && pip install -r requirements.txt
-    # 4. Use Python (Gunicorn) to serve the app, NOT npm run preview
+    # 4. Use Gunicorn to serve the app. This is the production-standard approach.
     startCommand: gunicorn -k uvicorn.workers.UvicornWorker main:app --bind 0.0.0.0:$PORT
     envVars:
       - key: API_KEY
