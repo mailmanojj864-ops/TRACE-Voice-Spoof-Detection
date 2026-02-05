@@ -5,19 +5,24 @@ import react from '@vitejs/plugin-react';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  // Ensure the app is served from the root. 
+  // This prevents blank pages caused by asset path mismatches.
+  base: '/',
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    // Ensure assets are placed in a consistent folder
+    assetsDir: 'assets',
+    // Polyfill or transform settings if targeting older browsers
+    target: 'esnext'
+  },
   define: {
-    'process.env': process.env
+    // Allows process.env to be used in the browser if needed
+    'process.env': {}
   },
+  // Dev-only settings (ignored by Render Static Site during build)
   server: {
-    // Allows the dev server to be accessed from Render subdomains
-    allowedHosts: ['.onrender.com']
-  },
-  preview: {
-    // Fixes the "Blocked Request" error on Render production URLs
-    allowedHosts: ['.onrender.com'],
-    // Ensure it uses the Render default port
-    port: 10000,
-    host: true,
-    strictPort: true
+    port: 3000,
+    host: true
   }
 });
