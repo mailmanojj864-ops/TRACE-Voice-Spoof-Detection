@@ -2,7 +2,7 @@
 import os
 import base64
 import json
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -25,10 +25,6 @@ app.add_middleware(
 class AnalysisRequest(BaseModel):
     audio: str
     mime: str
-
-# ----------------------------------------------------------------
-# API ROUTES (Must be defined before static files)
-# ----------------------------------------------------------------
 
 @app.get("/api/health")
 async def health():
@@ -74,17 +70,20 @@ async def analyze_signal(request: AnalysisRequest):
         print(f"Deployment Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# ----------------------------------------------------------------
-# FRONTEND SERVING (The fix for your website not showing)
-# ----------------------------------------------------------------
-
-# Define absolute paths to the dist folder
+# Serving the Frontend
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Check for common build folder locations
 DIST_DIR = os.path.join(BASE_DIR, "dist")
 
+if not os.path.exists(DIST_DIR):
+    # Fallback for some Render environments
+    DIST_DIR = os.path.join(os.getcwd(), "dist")
+
 if os.path.exists(DIST_DIR):
-    # Mount the assets folder (JS/CSS)
-    app.mount("/assets", StaticFiles(directory=os.path.join(DIST_DIR, "assets")), name="assets")
+    # Static files must be mounted before the catch-all route
+    assets_dir = os.path.join(DIST_DIR, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
 
     @app.get("/")
     async def serve_index():
@@ -92,23 +91,25 @@ if os.path.exists(DIST_DIR):
 
     @app.get("/{rest_of_path:path}")
     async def serve_spa(rest_of_path: str):
-        # If the file exists in dist, serve it (e.g. favicon.ico)
+        if rest_of_path.startswith("api/"):
+             raise HTTPException(status_code=404)
+        
         file_path = os.path.join(DIST_DIR, rest_of_path)
         if os.path.isfile(file_path):
             return FileResponse(file_path)
         
-        # Otherwise, if it's not an API call, serve index.html for React routing
-        if not rest_of_path.startswith("api/"):
-            return FileResponse(os.path.join(DIST_DIR, "index.html"))
-        
-        return JSONResponse(status_code=404, content={"detail": "Not Found"})
+        return FileResponse(os.path.join(DIST_DIR, "index.html"))
 else:
     @app.get("/")
     async def welcome():
         return {
             "error": "Frontend build missing",
-            "message": "The /dist folder was not found. Ensure 'npm run build' completed successfully.",
-            "instructions": "Visit /api/health to check backend status."
+            "message": f"Expected /dist folder at {DIST_DIR} but it was not found.",
+            "diagnostics": {
+                "cwd": os.getcwd(),
+                "files_in_root": os.listdir('.'),
+                "base_dir": BASE_DIR
+            }
         }
 
 if __name__ == "__main__":
