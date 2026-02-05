@@ -1,20 +1,21 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
 
-# Run and deploy your AI Studio app
+# TRACE | Signal Intelligence Unit
 
-This contains everything you need to run your app locally.
+High-fidelity synthetic speech detection system based on the AASIST HtrgGAT deep learning architecture.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1AFGGuwArA6iE4LpJjyuCi8mMoBrm6sJY
+## Deployment
 
-## Run Locally
+1. **Environment Variables**: Ensure you set `API_KEY` in your production environment (Vercel, Netlify, etc.) using a key from [Google AI Studio](https://aistudio.google.com/).
+2. **Install Dependencies**: `npm install`
+3. **Build**: `npm run build`
+4. **Deploy**: Upload the `dist/` folder to your static host.
 
-**Prerequisites:**  Node.js
+## Methodology
+The TRACE engine leverages an Integrated Spectro-Temporal Graph Attention Network (AASIST) to analyze audio features as nodes in a high-dimensional graph, detecting anomalies that traditional spectrogram-based models often miss.
 
+- **Sinc-Convolutional Front-end**
+- **Heterogeneous Graph Attention (HtrgGAT)**
+- **Attention-Based Graph Pooling**
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+---
+© 2024 Team STRATAGEM

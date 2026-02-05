@@ -3,9 +3,9 @@ services:
   - type: web
     name: trace-fullstack-app
     env: python
-    # Ensure node modules are installed, frontend is built, then python deps
+    # 1. Install Node deps 2. Build Frontend 3. Install Python deps
     buildCommand: npm install && npm run build && pip install -r requirements.txt
-    # Start command remains gunicorn for production stability
+    # 4. Use Python (Gunicorn) to serve the app, NOT npm run preview
     startCommand: gunicorn -k uvicorn.workers.UvicornWorker main:app --bind 0.0.0.0:$PORT
     envVars:
       - key: API_KEY

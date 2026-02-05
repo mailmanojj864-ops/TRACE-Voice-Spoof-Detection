@@ -13,14 +13,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const scrollTo = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
-      const headerOffset = 80;
-      const elementPosition = element.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
@@ -28,13 +21,16 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     <div className="min-h-screen relative overflow-hidden selection:bg-cyan-500 selection:text-white">
       {/* Background Atmosphere Layers */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0">
+        {/* Deep colored nebula glows */}
         <div className="absolute top-[-10%] left-[15%] w-[600px] h-[600px] bg-[#4aa3b8]/10 blur-[140px] rounded-full animate-pulse" />
         <div className="absolute bottom-[-10%] right-[10%] w-[500px] h-[500px] bg-orange-600/5 blur-[120px] rounded-full animate-pulse" style={{ animationDuration: '6s' }} />
         
+        {/* Vertical Data Streams (Decorative) */}
         <div className="absolute top-0 right-1/4 w-[1px] h-full bg-gradient-to-b from-transparent via-white/[0.03] to-transparent" />
         <div className="absolute top-0 left-1/4 w-[1px] h-full bg-gradient-to-b from-transparent via-white/[0.03] to-transparent" />
       </div>
 
+      {/* Team STRATAGEM Watermark - Fixed Floating */}
       <div className="fixed bottom-8 right-8 z-[100] pointer-events-none watermark-seal hidden md:block">
         <div className="bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl px-5 py-3 flex items-center gap-4 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
             <div className="p-2 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl shadow-[0_0_15px_rgba(234,88,12,0.4)]">
@@ -50,6 +46,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       <div className="relative z-10 flex flex-col items-center p-4 md:p-12">
         <header className="w-full max-w-6xl flex flex-col items-center justify-center mb-24 mt-8 flicker-ui">
           <div className="text-center group cursor-pointer relative" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+            {/* Holographic Concentric Rings */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] border border-[#4aa3b8]/15 rounded-full scale-[1.5] -z-10 animate-[spin_30s_linear_infinite]" />
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[450px] h-[450px] border-t border-[#ff7a18]/10 rounded-full scale-[1.3] -z-10 animate-[spin_45s_linear_infinite_reverse]" />
 
@@ -91,16 +88,16 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             />
             <div className="w-[1px] h-8 bg-white/10" />
             <NavButton 
-                onClick={() => scrollTo('protocols-section')} 
+                onClick={() => scrollTo('documentation-section')} 
                 icon={<Lock className="w-4 h-4" />} 
                 label="Protocols" 
                 color="hover:text-orange-500"
             />
             <div className="w-[1px] h-8 bg-white/10" />
             <NavButton 
-                onClick={() => scrollTo('analysis-lab')} 
-                icon={<Search className="w-4 h-4" />} 
-                label="Analysis" 
+                onClick={() => scrollTo('methodology-section')} 
+                icon={<Globe className="w-4 h-4" />} 
+                label="Forensics" 
                 color="hover:text-emerald-500"
             />
           </nav>
